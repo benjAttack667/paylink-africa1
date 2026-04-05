@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const distDir = process.env.NEXT_DIST_DIR || ".next";
+const apiProxyTarget = process.env.API_PROXY_TARGET?.trim()?.replace(/\/+$/, "") ?? "";
 
 function buildConnectSources() {
   const connectSources = new Set(["'self'"]);
@@ -113,6 +114,22 @@ const nextConfig = {
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
   outputFileTracingRoot: path.join(currentDirectory, ".."),
+  async rewrites() {
+    if (!apiProxyTarget) {
+      return [];
+    }
+
+    return {
+      beforeFiles: [
+        {
+          source: "/api/:path*",
+          destination: `${apiProxyTarget}/api/:path*`
+        }
+      ],
+      afterFiles: [],
+      fallback: []
+    };
+  },
   async headers() {
     return [
       {

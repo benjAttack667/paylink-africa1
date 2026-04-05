@@ -56,8 +56,9 @@ Puis redeployer le backend.
 3. Ajouter ces variables d'environnement:
 
 ```text
-NEXT_PUBLIC_API_BASE_URL=https://<ton-service-render>.onrender.com/api
+NEXT_PUBLIC_API_BASE_URL=https://<ton-projet>.vercel.app/api
 NEXT_PUBLIC_SITE_STAGE=pre-production
+API_PROXY_TARGET=https://<ton-service-render>.onrender.com
 ```
 
 4. Lancer le deploy.
@@ -99,6 +100,7 @@ Flow de smoke test:
 ## Notes utiles
 
 - les cookies cross-site entre Vercel et Render exigent `COOKIE_SECURE=true` et `COOKIE_SAME_SITE=none`
+- le frontend Vercel doit utiliser `/api` sur son propre domaine puis proxy vers Render via `API_PROXY_TARGET`
 - le mode demo utilise `PAYMENT_GATEWAY=MOCK` avec `ALLOW_MOCK_PAYMENTS_IN_PRODUCTION=true`
 - quand tu passeras plus tard a un vrai provider, retire ce flag et configure Flutterwave
 - le free tier peut dormir apres inactivite et rallonger le premier chargement

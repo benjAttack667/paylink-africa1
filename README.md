@@ -218,6 +218,8 @@ Chemin recommande pour une demo publique:
 - frontend sur `Vercel`
 - backend + PostgreSQL sur `Render`
 
+Pour garder une session vendeur stable entre le frontend et le backend, le frontend Vercel doit appeler l'API via son propre domaine `/api` puis proxy vers Render.
+
 Guide complet:
 
 - [deploy/demo/README.md](deploy/demo/README.md)
