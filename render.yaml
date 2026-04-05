@@ -1,0 +1,53 @@
+databases:
+  - name: paylink-africa-demo-db
+    plan: free
+    region: frankfurt
+    databaseName: paylink_africa_demo
+    user: paylink_africa_demo
+
+services:
+  - type: web
+    name: paylink-africa-demo-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    autoDeployTrigger: commit
+    healthCheckPath: /api/health
+    buildCommand: npm install --include=dev && npm run prisma:generate
+    startCommand: npm run start:render
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVICE_NAME
+        value: payment-links-api
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: paylink-africa-demo-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 12h
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAME_SITE
+        value: none
+      - key: PAYMENT_GATEWAY
+        value: MOCK
+      - key: ALLOW_MOCK_PAYMENTS_IN_PRODUCTION
+        value: "true"
+      - key: PAYMENT_CURRENCY
+        value: NGN
+      - key: API_PUBLIC_URL
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: LOG_FORMAT
+        value: combined
+      - key: LOG_LEVEL
+        value: info

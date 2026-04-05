@@ -1,0 +1,79 @@
+name: Release Readiness
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release-readiness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: paylink_africa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d paylink_africa"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/paylink_africa?schema=public
+      JWT_SECRET: ci-only-jwt-secret-with-at-least-32-characters
+      JWT_EXPIRES_IN: 12h
+      JWT_COOKIE_NAME: paylink_access
+      JWT_COOKIE_MAX_AGE: 12h
+      COOKIE_SECURE: "false"
+      COOKIE_SAME_SITE: lax
+      CSRF_HEADER_NAME: x-csrf-token
+      PAYMENT_GATEWAY: MOCK
+      PAYMENT_CURRENCY: NGN
+      API_PUBLIC_URL: http://localhost:4000
+      FLUTTERWAVE_WEBHOOK_HASH: change-me
+      CLIENT_URL: http://localhost:3000
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3100
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:4000/api
+      LOG_FORMAT: dev
+      LOG_LEVEL: info
+      SKIP_DB_UP: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix frontend
+
+      - name: Install Robot Framework dependencies
+        run: python -m pip install -r tests/robot/requirements.txt
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run release readiness gate
+        run: npm run ci:release-readiness

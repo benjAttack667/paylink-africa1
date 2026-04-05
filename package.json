@@ -1,0 +1,30 @@
+{
+  "name": "paylink-africa-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "start:backend": "npm --prefix backend start",
+    "start:frontend": "npm --prefix frontend start",
+    "prisma:generate": "npm --prefix backend run prisma:generate",
+    "prisma:validate": "cd backend && npx prisma validate",
+    "prisma:migrate": "cd backend && npx prisma migrate dev",
+    "prisma:deploy": "npm --prefix backend run prisma:deploy",
+    "build:frontend": "npm --prefix frontend run build",
+    "security:secrets": "node scripts/scan-secrets.mjs",
+    "security:audit": "node scripts/run-dependency-audit.mjs",
+    "test:robot:api": "node scripts/run-robot-tests.mjs",
+    "test:e2e": "playwright test",
+    "ci:quality": "node scripts/run-quality-gate.mjs",
+    "ci:release-readiness": "npm run ci:quality && npm run docker:prod:config && npm run docker:prod:build",
+    "docker:prod:config": "node scripts/docker-prod-config.mjs",
+    "docker:prod:build": "docker compose --env-file deploy/production/.env.example -f deploy/production/docker-compose.yml build backend frontend"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

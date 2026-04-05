@@ -1,0 +1,109 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - private
+
+  migrate:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+      target: deps
+    restart: "no"
+    env_file:
+      - ./.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["npx", "prisma", "migrate", "deploy"]
+    networks:
+      - private
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+      target: runner
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    init: true
+    stop_grace_period: 20s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "4000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - private
+      - edge
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 20s
+    depends_on:
+      backend:
+        condition: service_started
+    expose:
+      - "3000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - edge
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - ./.env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - edge
+
+networks:
+  edge:
+  private:
+    internal: true
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

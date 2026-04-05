@@ -1,0 +1,43 @@
+{
+  "name": "payment-links-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Backend API for PayLink Africa MVP",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "start:render": "prisma migrate deploy && node src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio",
+    "prisma:format": "prisma format"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "src",
+      "prisma"
+    ],
+    "ext": "js,json,prisma"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.0",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "pdfkit": "^0.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11",
+    "prisma": "^6.19.3"
+  }
+}
