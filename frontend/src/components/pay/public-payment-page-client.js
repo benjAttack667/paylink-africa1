@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { CreditCard, Lock, ShieldCheck, Smartphone } from "lucide-react";
 import CopyLinkButton from "@/components/ui/copy-link-button";
 import PageShell from "@/components/ui/page-shell";
 import StatusBadge from "@/components/ui/status-badge";
@@ -41,16 +42,19 @@ function SummaryItem({ label, value, helper }) {
   return (
     <div className="rounded-[24px] border border-black/10 bg-white/85 p-5 shadow-sm backdrop-blur">
       <p className="text-xs uppercase tracking-[0.2em] text-black/45">{label}</p>
-      <p className="mt-3 font-heading text-3xl font-semibold text-ink">{value}</p>
+      <p className="mt-3 font-heading text-2xl font-semibold text-ink sm:text-3xl">{value}</p>
       {helper ? <p className="mt-2 text-sm leading-6 text-black/55">{helper}</p> : null}
     </div>
   );
 }
 
-function BenefitCard({ title, description }) {
+function BenefitCard({ icon: Icon, title, description }) {
   return (
     <div className="rounded-[24px] border border-black/10 bg-white/80 p-5 shadow-sm backdrop-blur">
-      <p className="text-sm font-semibold text-ink">{title}</p>
+      <span className="feature-icon-shell text-pine">
+        <Icon size={18} />
+      </span>
+      <p className="mt-4 text-sm font-semibold text-ink">{title}</p>
       <p className="mt-2 text-sm leading-6 text-black/60">{description}</p>
     </div>
   );
@@ -297,25 +301,53 @@ export default function PublicPaymentPageClient({
     <PageShell className="flex items-center">
       <section className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-6">
-          <div className="surface-card p-8 md:p-10">
+          <div className="surface-card p-6 md:p-10">
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="eyebrow">Paiement public</span>
-                {checkoutTrustPoints.map((point) => (
-                  <span key={point} className="info-pill">
+                {checkoutTrustPoints.map((point, index) => (
+                  <span
+                    key={point}
+                    className={`info-pill ${index > 0 ? "hidden sm:inline-flex" : ""}`}
+                  >
                     {point}
                   </span>
                 ))}
               </div>
 
               <div className="space-y-4">
-                <h1 className="font-heading text-4xl font-semibold tracking-tight md:text-6xl">
+                <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-6xl">
                   {item.name}
                 </h1>
-                <p className="max-w-3xl text-base leading-8 text-black/65 md:text-lg">
+                <p className="max-w-3xl text-base leading-7 text-black/65 md:text-lg md:leading-8">
                   {item.description ||
                     "Finalisez votre paiement sur une page simple, claire et sans creation de compte."}
                 </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="hero-proof-card border border-black/10 bg-white/65 text-ink">
+                  <div className="feature-icon-shell text-pine">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <p className="mt-4 text-sm font-semibold">
+                    Une page plus rassurante pour conclure l'achat.
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-black/58">
+                    Le client voit le produit, le vendeur et le montant avant de payer.
+                  </p>
+                </div>
+                <div className="hero-proof-card border border-black/10 bg-white/65 text-ink">
+                  <div className="feature-icon-shell text-brand-700">
+                    <Smartphone size={18} />
+                  </div>
+                  <p className="mt-4 text-sm font-semibold">
+                    Un parcours pense d'abord pour le mobile.
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-black/58">
+                    La page reste simple a remplir meme depuis un smartphone.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -333,23 +365,31 @@ export default function PublicPaymentPageClient({
             />
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="muted-panel p-5 text-sm leading-6 text-black/60 md:hidden">
+            Vous verifiez le produit, vous remplissez vos coordonnees, puis vous
+            finalisez le paiement sans compte client.
+          </div>
+
+          <div className="hidden gap-4 md:grid md:grid-cols-3">
             <BenefitCard
+              icon={Smartphone}
               title="Simple a finaliser"
               description="Le client remplit trois champs, puis est redirige vers le checkout."
             />
             <BenefitCard
+              icon={CreditCard}
               title="Clair avant paiement"
               description="Le prix, le vendeur et le lien partage sont visibles avant l'action."
             />
             <BenefitCard
+              icon={ShieldCheck}
               title="Rassurant apres paiement"
               description="Le retour final affiche la confirmation ou l'echec avec la reference."
             />
           </div>
         </div>
 
-        <aside className="surface-card p-8 lg:sticky lg:top-6 lg:self-start">
+        <aside className="surface-card p-6 lg:sticky lg:top-6 lg:self-start lg:p-8">
           {error ? <p className="alert-error">{error}</p> : null}
 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -363,12 +403,12 @@ export default function PublicPaymentPageClient({
             </div>
             <CopyLinkButton
               path={`/pay/${item.slug}`}
-              className="ghost-button w-full sm:w-auto"
+              className="ghost-button hidden w-full sm:inline-flex sm:w-auto"
               idleLabel="Copier ce lien"
             />
           </div>
 
-          <div className="mt-6 rounded-[28px] border border-black/10 bg-black/[0.03] p-6">
+          <div className="mt-6 rounded-[28px] border border-black/10 bg-black/[0.03] p-5 sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-black/45">
@@ -398,11 +438,34 @@ export default function PublicPaymentPageClient({
               </div>
             </div>
 
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-black/10 bg-white/90 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-black/45">Mode prefere</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="feature-icon-shell text-pine">
+                    <Smartphone size={16} />
+                  </span>
+                  <span className="text-sm font-medium text-ink">Mobile Money</span>
+                </div>
+              </div>
+              <div className="rounded-2xl border border-black/10 bg-white/90 px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-black/45">Alternative</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="feature-icon-shell text-brand-700">
+                    <CreditCard size={16} />
+                  </span>
+                  <span className="text-sm font-medium text-ink">Carte bancaire</span>
+                </div>
+              </div>
+            </div>
+
             <div className="mt-5 grid gap-2">
-              {checkoutTrustPoints.map((point) => (
+              {checkoutTrustPoints.map((point, index) => (
                 <div
                   key={point}
-                  className="rounded-2xl border border-black/10 bg-white/90 px-4 py-3 text-sm text-black/65"
+                  className={`rounded-2xl border border-black/10 bg-white/90 px-4 py-3 text-sm text-black/65 ${
+                    index > 1 ? "hidden sm:block" : ""
+                  }`}
                 >
                   {point}
                 </div>
@@ -484,7 +547,10 @@ export default function PublicPaymentPageClient({
               type="submit"
               disabled={!isClientReady || paying}
             >
-              {!isClientReady ? "Initialisation..." : paying ? "Redirection..." : "Payer maintenant"}
+              <span className="inline-flex items-center gap-2">
+                <Lock size={16} />
+                {!isClientReady ? "Initialisation..." : paying ? "Redirection..." : "Payer maintenant"}
+              </span>
             </button>
 
             <p className="text-sm leading-6 text-black/55">

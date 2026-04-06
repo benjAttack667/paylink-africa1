@@ -2,18 +2,57 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  Activity,
+  CheckCircle2,
+  CreditCard,
+  Lock,
+  ShieldCheck,
+  Smartphone
+} from "lucide-react";
 import PageShell from "@/components/ui/page-shell";
 import StatusBadge from "@/components/ui/status-badge";
 import { apiRequest } from "@/lib/api";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import { publicRuntimeConfig } from "@/lib/runtime-config";
 
-function TrustCard({ label, value, helper }) {
+function TrustCard({ icon: Icon, label, value, helper, tone = "default" }) {
   return (
-    <div className="rounded-[24px] border border-white/10 bg-white/10 p-5 backdrop-blur">
-      <p className="text-xs uppercase tracking-[0.2em] text-white/50">{label}</p>
-      <p className="mt-3 font-heading text-2xl font-semibold text-white">{value}</p>
-      {helper ? <p className="mt-2 text-sm leading-6 text-white/68">{helper}</p> : null}
+    <div
+      className={`rounded-[24px] border p-5 backdrop-blur ${
+        tone === "dark"
+          ? "border-white/10 bg-white/10"
+          : "border-black/10 bg-white/90"
+      }`}
+    >
+      <span
+        className={
+          tone === "dark"
+            ? "feature-icon-shell-dark"
+            : "feature-icon-shell text-pine"
+        }
+      >
+        <Icon size={18} />
+      </span>
+      <p
+        className={`mt-4 text-xs uppercase tracking-[0.2em] ${
+          tone === "dark" ? "text-white/50" : "text-black/45"
+        }`}
+      >
+        {label}
+      </p>
+      <p
+        className={`mt-3 font-heading text-2xl font-semibold ${
+          tone === "dark" ? "text-white" : "text-ink"
+        }`}
+      >
+        {value}
+      </p>
+      {helper ? (
+        <p className={`mt-2 text-sm leading-6 ${tone === "dark" ? "text-white/68" : "text-black/58"}`}>
+          {helper}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -41,8 +80,8 @@ function EmptyState({ error }) {
           </div>
 
           <div className="muted-panel p-6 text-sm leading-7 text-black/60">
-            Tant que le gateway live n'est pas configure, le checkout mock permet de
-            valider le parcours complet sans activer un debit reel.
+            Ce checkout mock reste utile pour valider l'experience complete sans
+            activer de debit reel tant que le provider live n'est pas configure.
           </div>
         </div>
       </section>
@@ -90,13 +129,13 @@ export default function MockCheckoutPageClient({
     <PageShell className="flex items-center">
       <section className="mx-auto grid w-full max-w-6xl gap-6 lg:grid-cols-[1.02fr_0.98fr]">
         <div className="surface-card-dark p-8 md:p-10">
-          <div className="space-y-5">
+          <div className="space-y-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className="eyebrow border-white/15 bg-white/10 text-white/85 shadow-none">
                 Checkout simule
               </span>
               <span className="info-pill border-white/10 bg-white/10 text-white/75 shadow-none">
-                Pret a passer live avec les cles provider
+                Parcours premium pre-production
               </span>
               {publicRuntimeConfig.isPreProduction ? (
                 <span className="stage-pill border-white/12 bg-white/10 text-white/85 shadow-none">
@@ -106,33 +145,57 @@ export default function MockCheckoutPageClient({
             </div>
 
             <div className="space-y-4">
-              <h1 className="max-w-3xl font-heading text-4xl font-semibold tracking-tight text-white md:text-5xl">
+              <h1 className="max-w-3xl font-heading text-4xl font-bold tracking-tight text-white md:text-5xl">
                 {session.product.name}
               </h1>
               <p className="max-w-2xl text-base leading-8 text-white/74">
                 {session.product.description ||
-                  "Ce checkout de demonstration reproduit le parcours final attendu avant activation du gateway live."}
+                  "Ce checkout de demonstration reproduit une experience de paiement plus claire, plus rassurante et plus simple a terminer."}
               </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <TrustCard
+                icon={Lock}
                 label="Montant"
                 value={formatPrice(session.amount)}
                 helper="Montant affiche avant validation."
+                tone="dark"
               />
               <TrustCard
+                icon={ShieldCheck}
                 label="Vendeur"
                 value={session.product.sellerName || "Ce vendeur"}
                 helper={`Session creee le ${formatDateTime(session.createdAt)}`}
+                tone="dark"
               />
             </div>
 
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="hero-proof-card">
+                <div className="feature-icon-shell-dark">
+                  <Smartphone size={18} />
+                </div>
+                <p className="mt-4 text-sm font-semibold text-white">Mobile Money</p>
+                <p className="mt-2 text-sm leading-6 text-white/68">
+                  Une experience pensee pour les usages mobiles qui dominent les paiements au quotidien.
+                </p>
+              </div>
+              <div className="hero-proof-card">
+                <div className="feature-icon-shell-dark">
+                  <CreditCard size={18} />
+                </div>
+                <p className="mt-4 text-sm font-semibold text-white">Carte bancaire</p>
+                <p className="mt-2 text-sm leading-6 text-white/68">
+                  Une alternative plus classique pour les clients qui preferent la carte.
+                </p>
+              </div>
+            </div>
+
             <div className="rounded-[28px] border border-white/10 bg-white/8 p-5 text-sm leading-7 text-white/72 backdrop-blur">
-              Le comportement live est deja prepare. Tant que tu restes en mode
-              `MOCK`, ce checkout sert a valider l'experience complete. Quand tu
-              ajouteras les vraies cles et `PAYMENT_GATEWAY=FLUTTERWAVE`, la
-              redirection partira automatiquement vers le provider reel.
+              La vision derriere ce checkout est simple : transformer un simple lien
+              en une experience plus credible, plus rassurante et plus digne d'un
+              vrai progres pour le vendeur comme pour le client.
             </div>
           </div>
         </div>
@@ -173,6 +236,21 @@ export default function MockCheckoutPageClient({
             </div>
           </div>
 
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <TrustCard
+              icon={Smartphone}
+              label="Canal favori"
+              value="Mobile Money"
+              helper="Parcours fluide sur mobile."
+            />
+            <TrustCard
+              icon={Activity}
+              label="Statut"
+              value={isPaid ? "Valide" : "En attente"}
+              helper="Confirmation retournee sur le lien public."
+            />
+          </div>
+
           {isPaid ? (
             <div className="mt-6 rounded-[28px] border border-emerald-200 bg-emerald-50/95 p-5 shadow-sm">
               <p className="text-xs uppercase tracking-[0.2em] text-emerald-700">
@@ -196,11 +274,12 @@ export default function MockCheckoutPageClient({
           ) : (
             <div className="mt-6 space-y-4">
               <button
-                className="primary-button w-full"
+                className="primary-button w-full gap-2"
                 type="button"
                 onClick={handleComplete}
                 disabled={!isClientReady || submitting}
               >
+                <Lock size={16} />
                 {!isClientReady
                   ? "Initialisation..."
                   : submitting
@@ -220,7 +299,10 @@ export default function MockCheckoutPageClient({
             <Link href={`/pay/${session.product.slug}`} className="font-medium text-pine hover:text-brand-700">
               Retour au lien public
             </Link>
-            <span className="info-pill">Debit reel inactive tant que les cles live ne sont pas configurees</span>
+            <span className="info-pill">
+              <ShieldCheck size={14} />
+              Debit reel inactive tant que les cles live ne sont pas configurees
+            </span>
           </div>
         </aside>
       </section>

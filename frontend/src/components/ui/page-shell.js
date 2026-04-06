@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { Link2 } from "lucide-react";
 import { publicRuntimeConfig } from "@/lib/runtime-config";
 
 export default function PageShell({ children, className = "" }) {
   return (
-    <main className={`relative min-h-screen overflow-hidden px-5 py-6 md:px-10 md:py-8 ${className}`}>
+    <main className={`relative min-h-screen overflow-hidden px-4 py-4 md:px-10 md:py-8 ${className}`}>
       <div
         aria-hidden="true"
         className="absolute left-[-4rem] top-[-4rem] h-48 w-48 rounded-full bg-brand-100/35 blur-3xl"
@@ -18,9 +19,11 @@ export default function PageShell({ children, className = "" }) {
       />
 
       <div className="relative mx-auto max-w-7xl">
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between md:mb-8">
           <Link href="/" className="brand-mark w-fit">
-            <span className="brand-mark-dot" />
+            <span className="feature-icon-shell h-9 w-9 rounded-full border-none bg-pine text-white shadow-none">
+              <Link2 size={16} />
+            </span>
             <span>PayLink Africa</span>
           </Link>
 
@@ -32,8 +35,6 @@ export default function PageShell({ children, className = "" }) {
             >
               {publicRuntimeConfig.siteStageLabel}
             </span>
-            <span className="info-pill">MVP vendeur</span>
-            <span className="info-pill">Mobile friendly</span>
           </div>
         </div>
 

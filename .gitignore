@@ -16,3 +16,4 @@ playwright-report/
 test-results/
 deploy/production/.env
 deploy/production/backups/
+manual-preview.pids.txt

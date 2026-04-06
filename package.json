@@ -18,7 +18,7 @@
     "security:secrets": "node scripts/scan-secrets.mjs",
     "security:audit": "node scripts/run-dependency-audit.mjs",
     "test:robot:api": "node scripts/run-robot-tests.mjs",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run db:up && playwright test",
     "ci:quality": "node scripts/run-quality-gate.mjs",
     "ci:release-readiness": "npm run ci:quality && npm run docker:prod:config && npm run docker:prod:build",
     "docker:prod:config": "node scripts/docker-prod-config.mjs",

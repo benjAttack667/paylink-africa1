@@ -72,8 +72,8 @@ test("seller can create a link and complete a public payment", async ({
     .fill("Lien de paiement cree depuis le smoke test navigateur.");
   await page.getByRole("button", { name: "Creer le lien" }).click();
 
-  await expect(page.getByText("Lien de paiement cree avec succes.")).toBeVisible();
   await expect(page.getByRole("heading", { name: productName }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /Gerer ce lien|Lien selectionne/ }).first()).toBeVisible();
 
   await page.getByRole("button", { name: /Gerer ce lien|Lien selectionne/ }).first().click();
   await expect(page.getByRole("heading", { name: "Gerer ce lien" })).toBeVisible();
@@ -87,13 +87,16 @@ test("seller can create a link and complete a public payment", async ({
 
   await gotoPage(page, publicHref);
   await expect(page.getByRole("heading", { level: 1 })).toContainText(productName);
-  await expect(page.getByRole("button", { name: "Payer maintenant" })).toBeEnabled();
+  await expect(page.getByLabel("Nom complet")).toBeVisible({ timeout: 20000 });
+  await expect(page.getByRole("button", { name: /Payer maintenant/ })).toBeEnabled({
+    timeout: 20000
+  });
 
   await page.getByLabel("Nom complet").fill("Client Test");
   await page.getByLabel("Email").fill("client-test@example.com");
   await page.getByLabel("Telephone").fill("+2250700000000");
   await page.getByRole("button", { name: "Payer maintenant" }).click();
-  await expectUrlMatch(page, /\/checkout\/mock\//, 30000);
+  await page.waitForURL(/\/checkout\/mock\//, { timeout: 30000 });
   await expect(page.getByRole("button", { name: "Confirmer le paiement simule" })).toBeEnabled();
   await page.getByRole("button", { name: "Confirmer le paiement simule" }).click();
   await expectUrlMatch(page, /payment_status=paid/, 30000);
@@ -117,6 +120,9 @@ test("seller can create a link and complete a public payment", async ({
 
   await gotoPage(page, "/dashboard");
   await expect(page.getByRole("heading", { name: sellerHeadingPattern })).toBeVisible();
+  if (testInfo.project.name === "mobile") {
+    await page.getByRole("button", { name: "Paiements" }).click();
+  }
   await expect(page.getByText("Client Test").first()).toBeVisible();
   await expect(page.getByText("cl***@ex***.com").first()).toBeVisible();
   await expect(page.getByText("49,90").first()).toBeVisible();

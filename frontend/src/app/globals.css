@@ -15,12 +15,13 @@ body {
   @apply bg-canvas font-body text-ink antialiased;
   min-height: 100vh;
   background-image:
-    radial-gradient(circle at 10% 8%, rgba(214, 138, 22, 0.06), transparent 23%),
-    radial-gradient(circle at 86% 12%, rgba(27, 77, 62, 0.05), transparent 22%),
-    radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.04), transparent 30%),
-    linear-gradient(180deg, rgba(252, 251, 248, 0.98) 0%, rgba(246, 245, 242, 0.99) 52%, rgba(240, 240, 237, 1) 100%);
+    radial-gradient(circle at 10% 8%, rgba(214, 138, 22, 0.05), transparent 25%),
+    radial-gradient(circle at 86% 12%, rgba(27, 77, 62, 0.05), transparent 25%),
+    radial-gradient(circle at 50% 100%, rgba(15, 23, 42, 0.035), transparent 32%),
+    linear-gradient(180deg, rgba(252, 251, 248, 0.98) 0%, rgba(246, 244, 240, 0.99) 52%, rgba(240, 239, 235, 1) 100%);
   background-size: auto;
   background-position: 0 0;
+  background-attachment: fixed;
 }
 
 body::selection {
@@ -77,10 +78,12 @@ a,
 
 @layer components {
   .surface-card {
-    @apply relative overflow-hidden rounded-3xl border border-black/10 bg-white/95 backdrop-blur-xl;
+    @apply relative overflow-hidden rounded-3xl border border-white/60 backdrop-blur-xl;
+    background: rgba(255, 255, 255, 0.78);
     box-shadow:
-      0 24px 60px rgba(16, 16, 16, 0.07),
-      0 2px 10px rgba(16, 16, 16, 0.035);
+      0 24px 40px -12px rgba(16, 16, 16, 0.05),
+      0 4px 12px -2px rgba(16, 16, 16, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
   }
 
   .surface-card::before {
@@ -95,14 +98,21 @@ a,
     pointer-events: none;
   }
 
+  .surface-card:hover {
+    box-shadow:
+      0 30px 50px -12px rgba(16, 16, 16, 0.08),
+      0 8px 20px -4px rgba(16, 16, 16, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 1);
+  }
+
   .surface-card-dark {
     @apply relative overflow-hidden rounded-[2rem] border border-white/10 text-white;
     background:
       radial-gradient(circle at top left, rgba(245, 198, 109, 0.16), transparent 26%),
       radial-gradient(circle at 85% 20%, rgba(98, 191, 161, 0.16), transparent 24%),
-      linear-gradient(145deg, rgba(13, 21, 28, 0.98) 0%, rgba(19, 63, 51, 0.97) 62%, rgba(28, 94, 75, 0.95) 100%);
+      linear-gradient(145deg, rgba(12, 18, 16, 0.98) 0%, rgba(19, 63, 51, 0.97) 60%, rgba(27, 77, 62, 0.95) 100%);
     box-shadow:
-      0 30px 70px rgba(16, 16, 16, 0.22),
+      0 20px 40px -10px rgba(16, 16, 16, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
@@ -118,7 +128,7 @@ a,
   }
 
   .brand-mark {
-    @apply inline-flex items-center gap-3 rounded-full border border-black/10 bg-white/90 px-4 py-2 text-sm font-medium text-ink shadow-sm backdrop-blur;
+    @apply inline-flex items-center gap-3 rounded-full border border-white/60 bg-white/80 px-4 py-2 text-sm font-medium text-ink shadow-sm backdrop-blur;
   }
 
   .brand-mark-dot {
@@ -131,7 +141,7 @@ a,
   }
 
   .info-pill {
-    @apply inline-flex items-center rounded-full border border-black/10 bg-white/95 px-3 py-1.5 text-xs font-medium text-black/75 shadow-sm backdrop-blur;
+    @apply inline-flex items-center rounded-full border border-white/60 bg-white/80 px-3 py-1.5 text-xs font-medium text-black/75 shadow-sm backdrop-blur;
   }
 
   .stage-pill {
@@ -159,6 +169,48 @@ a,
   .hero-metric {
     @apply rounded-[1.75rem] border border-white/10 bg-white/10 px-4 py-4 backdrop-blur;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .premium-quote {
+    @apply rounded-[1.75rem] border border-black/10 p-5 shadow-sm backdrop-blur;
+    background: rgba(255, 255, 255, 0.72);
+  }
+
+  .premium-quote-mark {
+    @apply mb-4 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-50 text-brand-700 shadow-sm;
+  }
+
+  .feature-icon-shell {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-black/10 bg-white/85 text-ink shadow-sm backdrop-blur;
+  }
+
+  .feature-icon-shell-dark {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-white shadow-sm backdrop-blur;
+  }
+
+  .hero-proof-card {
+    @apply rounded-[1.75rem] border border-white/10 p-5 backdrop-blur;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .dark-stat-card {
+    @apply surface-card-dark p-6;
+  }
+
+  .light-stat-card {
+    @apply surface-card p-6;
+  }
+
+  .glass-input {
+    @apply w-full rounded-2xl px-4 py-3 text-sm text-ink outline-none transition duration-200;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(16, 16, 16, 0.1);
+  }
+
+  .glass-input:focus {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(214, 138, 22, 0.72);
+    box-shadow: 0 0 0 4px rgba(214, 138, 22, 0.15);
   }
 
   .soft-accent-card {

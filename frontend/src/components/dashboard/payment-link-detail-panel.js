@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ShieldCheck } from "lucide-react";
 import CopyLinkButton from "@/components/ui/copy-link-button";
 import StatusBadge from "@/components/ui/status-badge";
 import { formatDateTime, formatPrice } from "@/lib/format";
@@ -62,6 +63,9 @@ export default function PaymentLinkDetailPanel({
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-3">
+            <span className="feature-icon-shell text-pine">
+              <ShieldCheck size={18} />
+            </span>
             <h2 className="font-heading text-2xl font-semibold">Gerer ce lien</h2>
             <StatusBadge status={item.status} />
           </div>
@@ -82,8 +86,18 @@ export default function PaymentLinkDetailPanel({
 
       <div className="mt-6 flex flex-wrap gap-3">
         <CopyLinkButton path={`/pay/${item.slug}`} />
-        <span className="info-pill">{item.payments.length} paiement(s) dans l'historique</span>
-        <span className="info-pill">Coordonnees client masquees</span>
+        <Link
+          href={`/pay/${item.slug}`}
+          prefetch={false}
+          target="_blank"
+          className="info-pill font-medium text-pine hover:text-brand-700"
+        >
+          /pay/{item.slug}
+        </Link>
+        <span className="info-pill hidden sm:inline-flex">
+          {item.payments.length} paiement(s) dans l'historique
+        </span>
+        <span className="info-pill hidden sm:inline-flex">Coordonnees client masquees</span>
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -105,18 +119,11 @@ export default function PaymentLinkDetailPanel({
             {formatPrice(item.totalCollected)}
           </p>
         </div>
-        <div className="rounded-2xl border border-black/10 bg-black/[0.025] px-4 py-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-black/58">Cree le</p>
-          <p className="mt-2 text-sm font-semibold text-ink">
-            {formatDateTime(item.createdAt)}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-black/10 bg-black/[0.025] px-4 py-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-black/58">Mis a jour</p>
-          <p className="mt-2 text-sm font-semibold text-ink">
-            {formatDateTime(item.updatedAt)}
-          </p>
-        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-3 text-xs text-black/56">
+        <span>Cree le {formatDateTime(item.createdAt)}</span>
+        <span>Mis a jour le {formatDateTime(item.updatedAt)}</span>
       </div>
 
       <form className="mt-6 space-y-5" onSubmit={onSubmit} noValidate>
@@ -199,11 +206,11 @@ export default function PaymentLinkDetailPanel({
         </div>
       </form>
 
-      <div className="mt-8 rounded-3xl border border-black/10 bg-black/[0.02] p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <details className="mt-8 rounded-3xl border border-black/10 bg-black/[0.02] p-5">
+        <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3">
           <h3 className="font-heading text-xl font-semibold">Historique des paiements</h3>
           <span className="text-sm text-black/62">{item.payments.length} paiement(s)</span>
-        </div>
+        </summary>
 
         {item.payments.length === 0 ? (
           <p className="mt-4 text-sm text-black/64">Aucun paiement recu pour ce lien.</p>
@@ -238,7 +245,7 @@ export default function PaymentLinkDetailPanel({
             ))}
           </div>
         )}
-      </div>
+      </details>
     </section>
   );
 }

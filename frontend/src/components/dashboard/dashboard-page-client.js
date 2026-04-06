@@ -3,6 +3,14 @@
 import Link from "next/link";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Activity,
+  ArrowUpRight,
+  BarChart3,
+  Link2,
+  Plus,
+  ShieldCheck
+} from "lucide-react";
 import PaymentLinkCard from "@/components/dashboard/payment-link-card";
 import PaymentLinkDetailPanel from "@/components/dashboard/payment-link-detail-panel";
 import PageShell from "@/components/ui/page-shell";
@@ -28,6 +36,12 @@ const statusFilters = [
   { value: "ALL", label: "Tous" },
   { value: "ACTIVE", label: "Actifs" },
   { value: "INACTIVE", label: "Inactifs" }
+];
+
+const dashboardSections = [
+  { value: "create", label: "Creation" },
+  { value: "links", label: "Liens" },
+  { value: "payments", label: "Paiements" }
 ];
 
 function buildProductForm(product) {
@@ -64,15 +78,28 @@ function getFilterButtonClass(isActive) {
     : "inline-flex items-center rounded-full border border-black/10 bg-white/95 px-4 py-2 text-sm font-medium text-black/80 transition hover:border-black/20 hover:text-ink";
 }
 
+function getSectionButtonClass(isActive) {
+  return isActive
+    ? "inline-flex items-center justify-center rounded-full border border-ink bg-ink px-4 py-2 text-sm font-medium text-white shadow-sm"
+    : "inline-flex items-center justify-center rounded-full border border-black/10 bg-white/95 px-4 py-2 text-sm font-medium text-black/72 transition hover:border-black/20 hover:text-ink";
+}
+
 export default function DashboardPageClient({
   initialUser,
   initialCsrfToken,
   initialDashboardData
 }) {
   const router = useRouter();
+  const createSectionRef = useRef(null);
   const detailPanelRef = useRef(null);
   const detailCacheRef = useRef(new Map());
   const normalizedDashboardData = normalizeDashboardData(initialDashboardData);
+  const initialMobileSection =
+    normalizedDashboardData.recentPayments.length > 0
+      ? "payments"
+      : normalizedDashboardData.items.length > 0
+        ? "links"
+        : "create";
   const [user] = useState(initialUser);
   const [items, setItems] = useState(normalizedDashboardData.items);
   const [recentPayments, setRecentPayments] = useState(
@@ -95,6 +122,8 @@ export default function DashboardPageClient({
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectionLoadingId, setSelectionLoadingId] = useState("");
+  const [mobileSection, setMobileSection] = useState(initialMobileSection);
+  const [isDesktopLayout, setIsDesktopLayout] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
   const [isDashboardPending, startDashboardTransition] = useTransition();
   const deferredQuery = useDeferredValue(query);
@@ -108,6 +137,24 @@ export default function DashboardPageClient({
 
   useEffect(() => {
     setIsClientReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia("(min-width: 1280px)");
+    const handleChange = () => {
+      setIsDesktopLayout(mediaQuery.matches);
+    };
+
+    handleChange();
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -175,11 +222,30 @@ export default function DashboardPageClient({
       typeof window !== "undefined" &&
       window.matchMedia("(max-width: 1279px)").matches
     ) {
-      detailPanelRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
+      setMobileSection("links");
+
+      window.setTimeout(() => {
+        detailPanelRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }, 80);
+
+      return;
     }
+
+    detailPanelRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+  function focusCreateSection() {
+    setMobileSection("create");
+    createSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
   }
 
   async function loadDashboardData() {
@@ -325,6 +391,7 @@ export default function DashboardPageClient({
       setForm(initialForm);
       setFieldErrors({});
       setFormMessage("Lien de paiement cree avec succes.");
+      setMobileSection("links");
       cacheSelectedProduct(response.item);
       await refreshDashboard(response.item.id, { focusPanel: true });
     } catch (error) {
@@ -483,7 +550,7 @@ export default function DashboardPageClient({
         method: "POST",
         csrfToken: getActiveCsrfToken()
       });
-    } catch (error) {
+    } catch {
       // Clearing the local session is enough if the backend session already expired.
     } finally {
       clearSession();
@@ -505,25 +572,367 @@ export default function DashboardPageClient({
   const activeItemsCount = items.filter((item) => item.status === "ACTIVE").length;
   const inactiveItemsCount = items.filter((item) => item.status === "INACTIVE").length;
   const stats = [
-    { label: "Liens de paiement", value: summary.productsCount },
-    { label: "Paiements recus", value: summary.paymentsCount },
-    { label: "Montant collecte", value: formatPrice(summary.totalCollected) }
+    {
+      label: "Liens actifs",
+      value: summary.productsCount,
+      helper: `${activeItemsCount} actif(s)`,
+      icon: Link2,
+      tone: "dark"
+    },
+    {
+      label: "Paiements recus",
+      value: summary.paymentsCount,
+      helper: "Suivi en temps reel",
+      icon: Activity,
+      tone: "light"
+    },
+    {
+      label: "Montant collecte",
+      value: formatPrice(summary.totalCollected),
+      helper: "Progression du compte",
+      icon: BarChart3,
+      tone: "light"
+    }
   ];
+
+  const detailPanel = (
+    <div ref={detailPanelRef}>
+      <PaymentLinkDetailPanel
+        item={selectedProduct}
+        form={selectedForm}
+        fieldErrors={selectedFieldErrors}
+        loading={detailLoading}
+        saving={savingDetail}
+        togglingStatus={togglingStatus}
+        deleting={deletingProduct}
+        onChange={handleSelectedFormChange}
+        onSubmit={handleUpdateSelectedProduct}
+        onToggleStatus={handleToggleSelectedProductStatus}
+        onDelete={handleDeleteSelectedProduct}
+      />
+    </div>
+  );
+
+  const createSection = (
+    <section ref={createSectionRef} className="surface-card p-6 md:p-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <span className="eyebrow">Creation rapide</span>
+          <h2 className="font-heading text-2xl font-semibold">Nouveau lien</h2>
+          <p className="mt-3 text-sm leading-7 text-black/68">
+            Ajoutez un produit, un prix et une description courte. Le lien est actif
+            des sa creation.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <span className="info-pill">{activeItemsCount} actif(s)</span>
+          <span className="info-pill">{inactiveItemsCount} inactif(s)</span>
+        </div>
+      </div>
+
+      <form className="mt-6 space-y-5" onSubmit={handleSubmit} noValidate>
+        <div>
+          <label className="label-text" htmlFor="product-name">
+            Nom du produit
+          </label>
+          <input
+            id="product-name"
+            className={`auth-input ${fieldErrors.name ? "input-error" : ""}`}
+            name="name"
+            type="text"
+            placeholder="Ex: T-shirt premium"
+            value={form.name}
+            disabled={!isClientReady || submitting}
+            onChange={handleChange}
+          />
+          {fieldErrors.name ? <p className="field-error">{fieldErrors.name}</p> : null}
+        </div>
+
+        <div>
+          <label className="label-text" htmlFor="product-price">
+            Prix
+          </label>
+          <input
+            id="product-price"
+            className={`auth-input ${fieldErrors.price ? "input-error" : ""}`}
+            name="price"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="25.00"
+            value={form.price}
+            disabled={!isClientReady || submitting}
+            onChange={handleChange}
+          />
+          {fieldErrors.price ? <p className="field-error">{fieldErrors.price}</p> : null}
+        </div>
+
+        <div>
+          <label className="label-text" htmlFor="product-description">
+            Description
+          </label>
+          <textarea
+            id="product-description"
+            className={`auth-input min-h-28 resize-none ${fieldErrors.description ? "input-error" : ""}`}
+            name="description"
+            placeholder="Quelques mots pour presenter le produit"
+            value={form.description}
+            disabled={!isClientReady || submitting}
+            onChange={handleChange}
+          />
+          <div className="mt-2 flex items-center justify-between text-xs text-black/60">
+            <span>300 caracteres maximum.</span>
+            <span>{form.description.length}/300</span>
+          </div>
+          {fieldErrors.description ? (
+            <p className="field-error">{fieldErrors.description}</p>
+          ) : null}
+        </div>
+
+        <button
+          className="primary-button w-full"
+          type="submit"
+          disabled={!isClientReady || submitting}
+        >
+          {!isClientReady ? "Initialisation..." : submitting ? "Creation..." : "Creer le lien"}
+        </button>
+      </form>
+    </section>
+  );
+
+  const linksSectionContent = (
+    <section className="surface-card p-6 md:p-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="eyebrow">Gestion des liens</span>
+          <h2 className="font-heading text-2xl font-semibold">Liens de paiement</h2>
+          <p className="mt-2 text-sm text-black/68">
+            Filtrez rapidement puis ouvrez un lien pour le gerer.
+          </p>
+        </div>
+        <p className="text-sm text-black/60">
+          {filteredItems.length} resultat(s) sur {items.length}
+        </p>
+      </div>
+
+      <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div>
+          <label className="label-text" htmlFor="payment-link-search">
+            Rechercher un lien
+          </label>
+          <input
+            id="payment-link-search"
+            className="auth-input"
+            type="search"
+            placeholder="Nom, slug ou description"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-end gap-2">
+          {statusFilters.map((filter) => (
+            <button
+              key={filter.value}
+              type="button"
+              className={getFilterButtonClass(statusFilter === filter.value)}
+              onClick={() => setStatusFilter(filter.value)}
+            >
+              {filter.label}
+            </button>
+          ))}
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              className="ghost-button px-4 py-2 text-sm"
+              onClick={() => {
+                setQuery("");
+                setStatusFilter("ALL");
+              }}
+            >
+              Reinitialiser
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-black/64">
+        <p>
+          {isDashboardPending
+            ? "Mise a jour du dashboard en cours..."
+            : "Selectionnez un lien pour ouvrir sa fiche de gestion."}
+        </p>
+
+        {selectedListItem ? (
+          <button type="button" className="ghost-button px-4 py-2 text-sm" onClick={focusDetailPanel}>
+            Voir le lien selectionne
+          </button>
+        ) : null}
+      </div>
+
+      {filteredItems.length === 0 ? (
+        <div className="muted-panel mt-6 p-8 text-sm leading-7 text-black/60">
+          {items.length === 0 ? (
+            <>
+              Aucun lien de paiement pour le moment. Creez votre premier produit
+              pour obtenir une page publique partageable.
+            </>
+          ) : (
+            <>
+              Aucun lien ne correspond a vos filtres actuels. Essayez une autre
+              recherche ou reinitialisez les filtres.
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="mt-6 grid gap-4">
+          {filteredItems.map((item) => (
+            <PaymentLinkCard
+              key={item.id}
+              item={item}
+              isSelected={selectedProductId === item.id}
+              isLoading={selectionLoadingId === item.id}
+              onSelect={() => {
+                if (selectedProductId === item.id && selectedProduct) {
+                  focusDetailPanel();
+                  return;
+                }
+
+                setMobileSection("links");
+                setPageError("");
+                setFormMessage("");
+                loadSelectedProductDetail(item.id, { focusPanel: true });
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
+  const paymentsSection = (
+    <section className="surface-card p-6 md:p-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span className="eyebrow">Activite recente</span>
+          <h2 className="font-heading text-2xl font-semibold">Paiements recus</h2>
+          <p className="mt-2 text-sm text-black/68">
+            Les 10 paiements les plus recents sur l'ensemble de vos liens.
+          </p>
+        </div>
+        <span className="text-sm text-black/60">
+          {recentPayments.length} paiement(s) affiche(s)
+        </span>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <span className="info-pill">Vue globale du compte</span>
+        <span className="info-pill">Emails et telephones masques</span>
+        {selectedListItem ? (
+          <span className="info-pill">Lien selectionne: {selectedListItem.name}</span>
+        ) : null}
+      </div>
+
+      {recentPayments.length === 0 ? (
+        <div className="muted-panel mt-6 p-8 text-sm leading-7 text-black/60">
+          Aucun paiement recu pour le moment. Quand un client paiera un lien,
+          vous verrez le montant et la reference ici.
+        </div>
+      ) : (
+        <div className="mt-6 grid gap-3">
+          {recentPayments.map((payment) => (
+            <article
+              key={payment.id}
+              className="content-auto-card flex flex-col gap-4 rounded-[24px] border border-black/10 bg-black/[0.03] p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="space-y-1">
+                <p className="font-medium text-ink">
+                  {payment.product?.name || "Produit"}
+                </p>
+                <p className="text-sm text-black/62">{payment.reference}</p>
+                <p className="text-xs text-black/58">
+                  {payment.customerName || "Client non renseigne"}
+                  {payment.customerEmail ? ` - ${payment.customerEmail}` : ""}
+                </p>
+                <p className="text-xs text-black/56">
+                  {formatDateTime(payment.paidAt || payment.createdAt)}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <Link
+                  href={`/pay/${payment.product?.slug}`}
+                  prefetch={false}
+                  target="_blank"
+                  className="text-sm font-medium text-pine hover:text-brand-700"
+                >
+                  Ouvrir le lien
+                </Link>
+                <StatusBadge status={payment.status} />
+                <p className="font-heading text-xl font-semibold">
+                  {formatPrice(payment.amount)}
+                </p>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+
+  const mobileSelectedSummary = selectedListItem ? (
+    <section className="surface-card p-5">
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="eyebrow">Lien selectionne</span>
+          <StatusBadge status={selectedListItem.status} />
+        </div>
+        <h2 className="font-heading text-2xl font-semibold tracking-tight">
+          {selectedListItem.name}
+        </h2>
+        <p className="text-sm text-black/62">
+          {selectedListItem.paymentsCount} paiement(s) -{" "}
+          {formatPrice(selectedListItem.totalCollected)} collectes
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <button type="button" className="ghost-button w-full" onClick={focusDetailPanel}>
+          Gerer ce lien
+        </button>
+        <Link
+          href={`/pay/${selectedListItem.slug}`}
+          prefetch={false}
+          target="_blank"
+          className="ghost-button w-full"
+        >
+          Ouvrir /pay/{selectedListItem.slug}
+        </Link>
+      </div>
+    </section>
+  ) : null;
 
   return (
     <PageShell>
-      <section className="space-y-8">
-        <header className="surface-card overflow-hidden p-7 md:p-8">
+      <section className="space-y-6 md:space-y-8">
+        <header className="surface-card overflow-hidden p-6 md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
-              <span className="eyebrow">Dashboard vendeur</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="eyebrow">Dashboard vendeur</span>
+                <span className="info-pill gap-2">
+                  <ShieldCheck size={14} />
+                  Espace securise
+                </span>
+              </div>
               <div className="space-y-2">
-                <h1 className="font-heading text-4xl font-semibold tracking-tight md:text-5xl">
+                <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-5xl">
                   {user ? `Bonjour ${user.fullName}` : "Votre espace vendeur"}
                 </h1>
-                <p className="max-w-2xl text-base leading-7 text-black/72">
-                  Creez un lien, modifiez-le, activez-le ou supprimez-le depuis le
-                  meme espace tout en suivant vos paiements recus.
+                <p className="max-w-2xl text-base leading-7 text-black/70">
+                  Creez, partagez et suivez vos liens de paiement depuis une vue plus
+                  claire, plus rapide et plus utile au quotidien.
                 </p>
                 <div className="flex flex-wrap gap-2 pt-1">
                   {publicRuntimeConfig.isPreProduction ? (
@@ -534,13 +943,23 @@ export default function DashboardPageClient({
               </div>
             </div>
 
-            <button className="ghost-button w-full sm:w-auto" type="button" onClick={handleLogout}>
-              Se deconnecter
-            </button>
+            <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+              <button
+                className="primary-button w-full gap-2 sm:w-auto"
+                type="button"
+                onClick={focusCreateSection}
+              >
+                <Plus size={18} />
+                Creer un lien
+              </button>
+              <button className="ghost-button w-full sm:w-auto" type="button" onClick={handleLogout}>
+                Se deconnecter
+              </button>
+            </div>
           </div>
         </header>
 
-        {selectedListItem ? (
+        {selectedListItem && isDesktopLayout ? (
           <section className="surface-card p-5 md:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div className="space-y-2">
@@ -590,297 +1009,107 @@ export default function DashboardPageClient({
           </p>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {stats.map((item) => (
-            <article key={item.label} className="surface-card p-6">
-              <p className="text-sm font-medium text-black/65">{item.label}</p>
-              <p className="mt-4 font-heading text-4xl font-semibold">{item.value}</p>
-            </article>
-          ))}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          {stats.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <article
+                key={item.label}
+                className={`${item.tone === "dark" ? "dark-stat-card" : "light-stat-card"} min-w-0`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p
+                      className={`text-xs font-medium uppercase tracking-[0.18em] sm:text-sm sm:tracking-normal ${
+                        item.tone === "dark" ? "text-white/60" : "text-black/55"
+                      }`}
+                    >
+                      {item.label}
+                    </p>
+                    <p
+                      className={`mt-3 truncate font-heading text-xl font-semibold sm:mt-4 sm:text-4xl ${
+                        item.tone === "dark" ? "text-white" : "text-ink"
+                      }`}
+                    >
+                      {item.value}
+                    </p>
+                    <p
+                      className={`mt-3 text-xs sm:text-sm ${
+                        item.tone === "dark" ? "text-white/62" : "text-black/55"
+                      }`}
+                    >
+                      {item.helper}
+                    </p>
+                  </div>
+                  <span
+                    className={
+                      item.tone === "dark" ? "feature-icon-shell-dark" : "feature-icon-shell"
+                    }
+                  >
+                    <Icon size={18} />
+                  </span>
+                </div>
+              </article>
+            );
+          })}
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
-          <div className="space-y-6">
-            <section className="surface-card p-7 md:p-8">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h2 className="font-heading text-2xl font-semibold">Nouveau lien</h2>
-                  <p className="mt-3 text-sm leading-7 text-black/72">
-                    Renseignez un nom, un prix et une description courte. Le lien sera
-                    actif et accessible publiquement.
-                  </p>
-                </div>
+        {isDesktopLayout ? (
+          <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
+            <div className="space-y-6">
+              {createSection}
+              <div className="xl:sticky xl:top-6">{detailPanel}</div>
+            </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <span className="info-pill">{activeItemsCount} actif(s)</span>
-                  <span className="info-pill">{inactiveItemsCount} inactif(s)</span>
-                </div>
-              </div>
-
-              <form className="mt-6 space-y-5" onSubmit={handleSubmit} noValidate>
-                <div>
-                  <label className="label-text" htmlFor="product-name">
-                    Nom du produit
-                  </label>
-                  <input
-                    id="product-name"
-                    className={`auth-input ${fieldErrors.name ? "input-error" : ""}`}
-                    name="name"
-                    type="text"
-                    placeholder="Ex: T-shirt premium"
-                    value={form.name}
-                    disabled={!isClientReady || submitting}
-                    onChange={handleChange}
-                  />
-                  {fieldErrors.name ? <p className="field-error">{fieldErrors.name}</p> : null}
-                </div>
-
-                <div>
-                  <label className="label-text" htmlFor="product-price">
-                    Prix
-                  </label>
-                  <input
-                    id="product-price"
-                    className={`auth-input ${fieldErrors.price ? "input-error" : ""}`}
-                    name="price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="25.00"
-                    value={form.price}
-                    disabled={!isClientReady || submitting}
-                    onChange={handleChange}
-                  />
-                  {fieldErrors.price ? <p className="field-error">{fieldErrors.price}</p> : null}
-                </div>
-
-                <div>
-                  <label className="label-text" htmlFor="product-description">
-                    Description
-                  </label>
-                  <textarea
-                    id="product-description"
-                    className={`auth-input min-h-32 resize-none ${fieldErrors.description ? "input-error" : ""}`}
-                    name="description"
-                    placeholder="Quelques mots pour presenter le produit"
-                    value={form.description}
-                    disabled={!isClientReady || submitting}
-                    onChange={handleChange}
-                  />
-                  <div className="mt-2 flex items-center justify-between text-xs text-black/60">
-                    <span>Simple et clair suffit pour ce MVP.</span>
-                    <span>{form.description.length}/300</span>
-                  </div>
-                  {fieldErrors.description ? (
-                    <p className="field-error">{fieldErrors.description}</p>
-                  ) : null}
-                </div>
-
-                <button
-                  className="primary-button w-full"
-                  type="submit"
-                  disabled={!isClientReady || submitting}
-                >
-                  {!isClientReady ? "Initialisation..." : submitting ? "Creation..." : "Creer le lien"}
-                </button>
-              </form>
-            </section>
-
-            <div ref={detailPanelRef} className="xl:sticky xl:top-6">
-              <PaymentLinkDetailPanel
-                item={selectedProduct}
-                form={selectedForm}
-                fieldErrors={selectedFieldErrors}
-                loading={detailLoading}
-                saving={savingDetail}
-                togglingStatus={togglingStatus}
-                deleting={deletingProduct}
-                onChange={handleSelectedFormChange}
-                onSubmit={handleUpdateSelectedProduct}
-                onToggleStatus={handleToggleSelectedProductStatus}
-                onDelete={handleDeleteSelectedProduct}
-              />
+            <div className="space-y-6">
+              {linksSectionContent}
+              {paymentsSection}
             </div>
           </div>
-
-          <div className="space-y-6">
-            <section className="surface-card p-7 md:p-8">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="font-heading text-2xl font-semibold">Liens de paiement</h2>
-                  <p className="mt-2 text-sm text-black/68">
-                    Recherchez, filtrez puis selectionnez un lien pour le gerer sans
-                    perdre le contexte.
-                  </p>
-                </div>
-                <p className="text-sm text-black/60">
-                  {filteredItems.length} resultat(s) sur {items.length}
-                </p>
-              </div>
-
-              <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-                <div>
-                  <label className="label-text" htmlFor="payment-link-search">
-                    Rechercher un lien
-                  </label>
-                  <input
-                    id="payment-link-search"
-                    className="auth-input"
-                    type="search"
-                    placeholder="Nom, slug ou description"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-end gap-2">
-                  {statusFilters.map((filter) => (
-                    <button
-                      key={filter.value}
-                      type="button"
-                      className={getFilterButtonClass(statusFilter === filter.value)}
-                      onClick={() => setStatusFilter(filter.value)}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                  {hasActiveFilters ? (
-                    <button
-                      type="button"
-                      className="ghost-button px-4 py-2 text-sm"
-                      onClick={() => {
-                        setQuery("");
-                        setStatusFilter("ALL");
-                      }}
-                    >
-                      Reinitialiser
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-black/64">
-                <p>
-                  {isDashboardPending
-                    ? "Mise a jour du dashboard en cours..."
-                    : "Selectionnez un lien pour ouvrir son panneau detail sans quitter la liste."}
-                </p>
-
-                {selectedListItem ? (
-                  <button type="button" className="ghost-button px-4 py-2 text-sm" onClick={focusDetailPanel}>
-                    Voir le lien selectionne
+        ) : (
+          <>
+            <div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {dashboardSections.map((section) => (
+                  <button
+                    key={section.value}
+                    type="button"
+                    className={getSectionButtonClass(mobileSection === section.value)}
+                    onClick={() => setMobileSection(section.value)}
+                  >
+                    {section.label}
                   </button>
-                ) : null}
+                ))}
               </div>
+            </div>
 
-              {filteredItems.length === 0 ? (
-                <div className="muted-panel mt-6 p-8 text-sm leading-7 text-black/60">
-                  {items.length === 0 ? (
-                    <>
-                      Aucun lien de paiement pour le moment. Creez votre premier produit
-                      pour obtenir une page publique partageable.
-                    </>
+            <div className="space-y-6">
+              {mobileSection === "create" ? createSection : null}
+
+              {mobileSection === "links" ? (
+                <div className="space-y-4">
+                  {mobileSelectedSummary}
+
+                  {selectedListItem ? (
+                    <details className="surface-card p-5">
+                      <summary className="cursor-pointer list-none text-sm font-medium text-black/72">
+                        Changer de lien ou filtrer la liste
+                      </summary>
+                      <div className="mt-4">{linksSectionContent}</div>
+                    </details>
                   ) : (
-                    <>
-                      Aucun lien ne correspond a vos filtres actuels. Essayez une autre
-                      recherche ou reinitialisez les filtres.
-                    </>
+                    linksSectionContent
                   )}
-                </div>
-              ) : (
-                <div className="mt-6 grid gap-4">
-                  {filteredItems.map((item) => (
-                    <PaymentLinkCard
-                      key={item.id}
-                      item={item}
-                      isSelected={selectedProductId === item.id}
-                      isLoading={selectionLoadingId === item.id}
-                      onSelect={() => {
-                        if (selectedProductId === item.id && selectedProduct) {
-                          focusDetailPanel();
-                          return;
-                        }
 
-                        setPageError("");
-                        setFormMessage("");
-                        loadSelectedProductDetail(item.id, { focusPanel: true });
-                      }}
-                    />
-                  ))}
+                  {selectedListItem || detailLoading ? detailPanel : null}
                 </div>
-              )}
-            </section>
+              ) : null}
 
-            <section className="surface-card p-7 md:p-8">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="font-heading text-2xl font-semibold">Paiements recus</h2>
-                  <p className="mt-2 text-sm text-black/68">
-                    Les 10 paiements les plus recents sur l'ensemble de vos liens.
-                  </p>
-                </div>
-                <span className="text-sm text-black/60">
-                  {recentPayments.length} paiement(s) affiche(s)
-                </span>
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="info-pill">Vue globale du compte</span>
-                <span className="info-pill">Emails et telephones masques</span>
-                {selectedListItem ? (
-                  <span className="info-pill">
-                    Lien selectionne: {selectedListItem.name}
-                  </span>
-                ) : null}
-              </div>
-
-              {recentPayments.length === 0 ? (
-                <div className="muted-panel mt-6 p-8 text-sm leading-7 text-black/60">
-                  Aucun paiement recu pour le moment. Quand un client paiera un lien,
-                  vous verrez le montant et la reference ici.
-                </div>
-              ) : (
-                <div className="mt-6 grid gap-3">
-                  {recentPayments.map((payment) => (
-                    <article
-                      key={payment.id}
-                      className="content-auto-card flex flex-col gap-4 rounded-[24px] border border-black/10 bg-black/[0.03] p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-sm sm:flex-row sm:items-center sm:justify-between"
-                    >
-                      <div className="space-y-1">
-                        <p className="font-medium text-ink">
-                          {payment.product?.name || "Produit"}
-                        </p>
-                        <p className="text-sm text-black/62">{payment.reference}</p>
-                        <p className="text-xs text-black/58">
-                          {payment.customerName || "Client non renseigne"}
-                          {payment.customerEmail ? ` - ${payment.customerEmail}` : ""}
-                        </p>
-                        <p className="text-xs text-black/56">
-                          {formatDateTime(payment.paidAt || payment.createdAt)}
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Link
-                          href={`/pay/${payment.product?.slug}`}
-                          prefetch={false}
-                          target="_blank"
-                          className="text-sm font-medium text-pine hover:text-brand-700"
-                        >
-                          Ouvrir le lien
-                        </Link>
-                        <StatusBadge status={payment.status} />
-                        <p className="font-heading text-xl font-semibold">
-                          {formatPrice(payment.amount)}
-                        </p>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
-          </div>
-        </div>
+              {mobileSection === "payments" ? paymentsSection : null}
+            </div>
+          </>
+        )}
       </section>
     </PageShell>
   );

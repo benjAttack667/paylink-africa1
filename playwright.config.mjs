@@ -50,7 +50,7 @@ export default defineConfig({
   webServer: [
     {
       command: createBackendCommand(),
-      url: `${testBackendUrl}/api/health`,
+      url: `${testBackendUrl}/api/health/ready`,
       reuseExistingServer: false,
       timeout: 120000
     },
