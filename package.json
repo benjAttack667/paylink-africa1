@@ -25,6 +25,6 @@
     "docker:prod:build": "docker compose --env-file deploy/production/.env.example -f deploy/production/docker-compose.yml build backend frontend"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1"
+    "@playwright/test": "^1.60.0"
   }
 }
