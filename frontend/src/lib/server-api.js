@@ -14,7 +14,7 @@ function buildCookieHeader(cookieStore) {
 }
 
 export async function serverApiRequest(path, options = {}) {
-  const { method = "GET", body, headers } = options;
+  const { method = "GET", body, headers, timeoutMs = 8000 } = options;
   const requestHeaders = new Headers(headers ?? {});
 
   if (!SERVER_API_BASE_URL) {
@@ -32,12 +32,27 @@ export async function serverApiRequest(path, options = {}) {
     requestHeaders.set("Cookie", cookieHeader);
   }
 
-  const response = await fetch(`${SERVER_API_BASE_URL}${path}`, {
-    method,
-    headers: requestHeaders,
-    body: body === undefined ? undefined : JSON.stringify(body),
-    cache: "no-store"
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  let response;
+
+  try {
+    response = await fetch(`${SERVER_API_BASE_URL}${path}`, {
+      method,
+      headers: requestHeaders,
+      body: body === undefined ? undefined : JSON.stringify(body),
+      cache: "no-store",
+      signal: controller.signal
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Le serveur met trop de temps a repondre.");
+    }
+
+    throw new Error("Le serveur API est momentanement indisponible.");
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const contentType = response.headers.get("content-type") ?? "";
   const payload = contentType.includes("application/json")
