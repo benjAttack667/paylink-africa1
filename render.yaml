@@ -8,19 +8,16 @@ databases:
 services:
   - type: web
     name: paylink-africa-demo-api
-    runtime: node
+    runtime: docker
     plan: free
     region: frankfurt
-    rootDir: backend
     autoDeployTrigger: commit
     healthCheckPath: /api/health
-    buildCommand: npm install --include=dev && npm run prisma:generate
-    startCommand: npm run start:render
+    dockerfilePath: ./backend-rust/Dockerfile
+    dockerContext: .
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: SERVICE_NAME
-        value: payment-links-api
+        value: payment-links-api-rust
       - key: TRUST_PROXY_HOPS
         value: "1"
       - key: DATABASE_URL
@@ -29,18 +26,18 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
-      - key: JWT_EXPIRES_IN
-        value: 12h
+      - key: JWT_COOKIE_MAX_AGE
+        value: "43200"
       - key: COOKIE_SECURE
         value: "true"
       - key: COOKIE_SAME_SITE
         value: none
       - key: PAYMENT_GATEWAY
         value: MOCK
-      - key: ALLOW_MOCK_PAYMENTS_IN_PRODUCTION
-        value: "true"
       - key: PAYMENT_CURRENCY
         value: NGN
+      - key: UPSTREAM_API_URL
+        value: http://127.0.0.1:4000
       - key: API_PUBLIC_URL
         sync: false
       - key: CLIENT_URL

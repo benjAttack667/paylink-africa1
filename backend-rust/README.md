@@ -48,8 +48,9 @@ référence auprès de Flutterwave avant de marquer le paiement comme payé.
 cargo run --manifest-path backend-rust/Cargo.toml
 ```
 
-Variables minimales : copier `.env.example` vers `.env`, configurer `DATABASE_URL`,
-et lancer Express sur le port `4000` pendant la phase passerelle.
+Variables minimales : copier `.env.example` vers `.env` et configurer `DATABASE_URL`.
+Le service Rust peut fonctionner seul sur le port fourni par `PORT` ; `UPSTREAM_API_URL`
+reste disponible uniquement pour les routes encore proxifiees pendant la migration.
 
 Avec `REDIS_URL`, le rate limiting applique 10 requêtes/minute pour l'authentification,
 20 pour le checkout et 60 pour le webhook Flutterwave.

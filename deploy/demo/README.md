@@ -5,7 +5,7 @@ Cette configuration est pensee pour une demonstration publique a faible cout, pa
 ## Architecture demo
 
 - frontend Next.js sur Vercel
-- backend Express + Prisma sur Render
+- backend Rust + Axum + SQLx sur Render
 - PostgreSQL gratuit sur Render
 - paiements en mode `MOCK` avec opt-in explicite de demo
 
@@ -24,6 +24,7 @@ npm run ci:release-readiness
 1. Aller sur Render et creer un nouveau Blueprint a partir du repo GitHub.
 2. Render detectera automatiquement [`render.yaml`](../../render.yaml).
 3. Laisser la base `paylink-africa-demo-db` et le service `paylink-africa-demo-api` se creer.
+   Le service utilise `backend-rust/Dockerfile` et conserve le schema PostgreSQL Prisma.
 4. Quand Render demande les variables `sync: false`, renseigner temporairement:
 
 ```text
