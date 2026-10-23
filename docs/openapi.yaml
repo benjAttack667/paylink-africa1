@@ -1,0 +1,134 @@
+openapi: 3.0.3
+info:
+  title: PayLink Africa API
+  version: 0.1.0
+  description: Contrat partagé du backend Rust et du frontend Next.js.
+servers:
+  - url: http://localhost:4200
+    description: API Rust locale
+tags:
+  - name: Health
+  - name: Auth
+  - name: Payment links
+  - name: Payments
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service disponible
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Session active
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /api/payment-links:
+    get:
+      tags: [Payment links]
+      operationId: listPaymentLinks
+      security: [{ cookieAuth: [] }]
+      responses:
+        '200':
+          description: Liens et statistiques du vendeur
+    post:
+      tags: [Payment links]
+      operationId: createPaymentLink
+      security: [{ cookieAuth: [] }, { csrfHeader: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentLinkInput'
+      responses:
+        '201':
+          description: Lien créé
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/payment-links/{slug}:
+    get:
+      tags: [Payment links]
+      operationId: getPublicPaymentLink
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+      responses:
+        '200':
+          description: Lien public actif
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/payment-links/{slug}/pay:
+    post:
+      tags: [Payments]
+      operationId: createPaymentCheckout
+      parameters:
+        - $ref: '#/components/parameters/Slug'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerInput'
+      responses:
+        '201':
+          description: Checkout créé
+  /api/payments/flutterwave/callback:
+    get:
+      tags: [Payments]
+      operationId: flutterwaveCallback
+      responses:
+        '307':
+          description: Redirection vers la page de paiement
+  /api/payments/flutterwave/webhook:
+    post:
+      tags: [Payments]
+      operationId: flutterwaveWebhook
+      description: Webhook vérifié avec la signature HMAC Flutterwave.
+      responses:
+        '200':
+          description: Webhook traité
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: paylink_access
+    csrfHeader:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+  parameters:
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    PaymentLinkInput:
+      type: object
+      required: [name, price]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 120 }
+        price: { type: string, example: '2500.00' }
+        description: { type: string, maxLength: 300 }
+    CustomerInput:
+      type: object
+      required: [customerName, customerEmail]
+      properties:
+        customerName: { type: string }
+        customerEmail: { type: string, format: email }
+        customerPhone: { type: string, nullable: true }
+  responses:
+    BadRequest:
+      description: Requête invalide
+    Unauthorized:
+      description: Authentification requise
+    NotFound:
+      description: Ressource introuvable

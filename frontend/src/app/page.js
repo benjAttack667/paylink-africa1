@@ -10,6 +10,7 @@ import {
   Smartphone
 } from "lucide-react";
 import PageShell from "@/components/ui/page-shell";
+import ThreeHeroScene from "@/components/ui/three-hero-scene";
 
 const steps = [
   {
@@ -58,8 +59,35 @@ export default function HomePage() {
     <PageShell className="flex items-start">
       <section className="space-y-6 md:space-y-8">
         <section className="grid gap-5 lg:grid-cols-[1.08fr_0.92fr]">
-          <div className="surface-card-dark p-6 md:p-10">
-            <div className="space-y-6">
+          <div className="surface-card-dark relative isolate overflow-hidden p-6 md:p-10">
+            <ThreeHeroScene />
+            <div className="hero-preview-card" aria-label="Aperçu d'un lien de paiement">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/55">
+                  Lien actif
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-semibold text-emerald-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                  En ligne
+                </span>
+              </div>
+              <div className="mt-5 flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-white/70">Collection du jour</p>
+                  <p className="mt-1 font-heading text-3xl font-semibold tracking-tight text-white">
+                    184 500 <span className="text-sm font-medium text-white/55">NGN</span>
+                  </p>
+                </div>
+                <div className="hero-preview-sparkline" aria-hidden="true">
+                  <span /><span /><span /><span /><span /><span /><span />
+                </div>
+              </div>
+              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-xs text-white/55">
+                <span>Produit premium</span>
+                <span className="font-medium text-white/80">12 paiements reçus</span>
+              </div>
+            </div>
+            <div className="relative z-10 space-y-6">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="eyebrow border-white/15 bg-white/10 text-white/85 shadow-none">
                   PayLink Africa
@@ -161,7 +189,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="surface-card p-6 md:p-8">
+        <section id="fonctionnement" className="surface-card p-6 md:p-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <span className="eyebrow">Comment ca marche</span>

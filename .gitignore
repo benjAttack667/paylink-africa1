@@ -5,11 +5,14 @@ frontend/.next/
 frontend/.next-e2e/
 backend/.env
 frontend/.env.local
+backend-rust/target/
+backend-rust/.env
 .tmp/
 tmp-*.png
 receipt-preview.pdf
 dist/
 coverage/
+frontend/storybook-static/
 *.log
 tests/robot/results/
 playwright-report/

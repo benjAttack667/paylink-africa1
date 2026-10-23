@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -90,6 +91,7 @@ export default function DashboardPageClient({
   initialDashboardData
 }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const createSectionRef = useRef(null);
   const detailPanelRef = useRef(null);
   const detailCacheRef = useRef(new Map());
@@ -249,7 +251,11 @@ export default function DashboardPageClient({
   }
 
   async function loadDashboardData() {
-    const response = await apiRequest("/payment-links");
+    const response = await queryClient.fetchQuery({
+      queryKey: ["dashboard", "payment-links"],
+      queryFn: () => apiRequest("/payment-links"),
+      staleTime: 30_000
+    });
 
     startDashboardTransition(() => {
       setItems(response.items);
@@ -316,6 +322,7 @@ export default function DashboardPageClient({
   }
 
   async function refreshDashboard(focusProductId = selectedProductId, options = {}) {
+    await queryClient.invalidateQueries({ queryKey: ["dashboard", "payment-links"] });
     const response = await loadDashboardData();
 
     if (!focusProductId) {

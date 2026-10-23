@@ -7,14 +7,17 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "dev:backend": "npm --prefix backend run dev",
+    "dev:backend:rust": "cargo run --manifest-path backend-rust/Cargo.toml",
     "dev:frontend": "npm --prefix frontend run dev",
     "start:backend": "npm --prefix backend start",
+    "start:backend:rust": "cargo run --release --manifest-path backend-rust/Cargo.toml",
     "start:frontend": "npm --prefix frontend start",
     "prisma:generate": "npm --prefix backend run prisma:generate",
     "prisma:validate": "cd backend && npx prisma validate",
     "prisma:migrate": "cd backend && npx prisma migrate dev",
     "prisma:deploy": "npm --prefix backend run prisma:deploy",
     "build:frontend": "npm --prefix frontend run build",
+    "api:types": "openapi-typescript docs/openapi.yaml -o frontend/src/lib/api-schema.d.ts",
     "security:secrets": "node scripts/scan-secrets.mjs",
     "security:audit": "node scripts/run-dependency-audit.mjs",
     "test:robot:api": "node scripts/run-robot-tests.mjs",
@@ -25,6 +28,7 @@
     "docker:prod:build": "docker compose --env-file deploy/production/.env.example -f deploy/production/docker-compose.yml build backend frontend"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1"
+    "@playwright/test": "^1.59.1",
+    "openapi-typescript": "^7.13.0"
   }
 }

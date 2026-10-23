@@ -14,8 +14,11 @@ Le projet permet a un vendeur de:
 PayLink Africa repose sur une architecture simple et evolutive:
 
 - frontend `Next.js 15` avec `App Router` et `Tailwind CSS`
+- cache client `TanStack Query` pour les requêtes et mutations
 - backend `Node.js + Express`
+- backend de migration `Rust + Axum + SQLx`
 - base de donnees `PostgreSQL`
+- cache optionnel `Redis` pour les pages publiques
 - ORM `Prisma`
 - authentification `JWT` en cookie `HttpOnly`
 - tests API avec `Robot Framework`
@@ -32,6 +35,7 @@ PayLink Africa repose sur une architecture simple et evolutive:
 - recu PDF telechargeable apres paiement confirme
 - validation backend centralisee
 - audit logs, health checks et quality gate CI
+- contrat API versionné dans `docs/openapi.yaml`
 
 ## Structure du projet
 
@@ -42,6 +46,7 @@ paylink-africa/
 |- deploy/demo/             # Guide demo gratuite Vercel + Render
 |- deploy/production/       # Stack VPS Docker + Caddy + backups
 |- tests/                   # Robot Framework + Playwright
+|- docs/openapi.yaml        # Contrat partagé frontend/backend
 |- docker-compose.yml       # PostgreSQL local pour le dev
 |- render.yaml              # Blueprint Render pour la demo backend + DB
 `- package.json             # Scripts racine
@@ -116,6 +121,14 @@ Frontend local:
 
 - `http://localhost:3000`
 
+### Variante Rust pendant la migration
+
+Le service Rust peut servir de passerelle compatible devant l'API Express pendant la
+migration progressive. Copier `backend-rust/.env.example` vers `backend-rust/.env`,
+lancer Express sur `4000`, puis lancer le service Rust sur `4200`. Pour faire pointer
+le frontend vers cette passerelle, utiliser `frontend/.env.rust.example` comme base de
+`.env.local`.
+
 ## Variables d'environnement principales
 
 ### Backend
@@ -141,6 +154,7 @@ Variables importantes:
 - `API_PUBLIC_URL`
 - `CLIENT_URL`
 - `ALLOWED_ORIGINS`
+- `REDIS_URL` pour activer le cache Redis
 - `FLUTTERWAVE_SECRET_KEY`
 - `FLUTTERWAVE_WEBHOOK_HASH`
 
@@ -168,6 +182,7 @@ Copier `frontend/.env.example` vers `frontend/.env.local`.
 - `npm run security:secrets`
 - `npm run security:audit`
 - `npm run ci:quality`
+- `npm run api:types`
 - `npm run ci:release-readiness`
 
 ## Qualite et tests

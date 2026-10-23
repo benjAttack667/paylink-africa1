@@ -1,4 +1,5 @@
 import { DM_Sans, Space_Grotesk } from "next/font/google";
+import QueryProvider from "@/components/providers/query-provider";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -28,7 +29,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr">
       <body className={`${dmSans.variable} ${spaceGrotesk.variable}`}>
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );

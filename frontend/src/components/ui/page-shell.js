@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Link2 } from "lucide-react";
+import { ArrowUpRight, Link2 } from "lucide-react";
 import { publicRuntimeConfig } from "@/lib/runtime-config";
 
 export default function PageShell({ children, className = "" }) {
@@ -27,7 +27,15 @@ export default function PageShell({ children, className = "" }) {
             <span>PayLink Africa</span>
           </Link>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <nav aria-label="Navigation principale" className="hidden items-center gap-1 rounded-full border border-black/10 bg-white/60 p-1 text-sm shadow-sm backdrop-blur md:flex">
+              <Link href="/#fonctionnement" className="rounded-full px-3 py-2 text-black/60 hover:bg-white hover:text-ink">
+                Fonctionnement
+              </Link>
+              <Link href="/login" className="rounded-full px-3 py-2 text-black/60 hover:bg-white hover:text-ink">
+                Se connecter
+              </Link>
+            </nav>
             <span
               className={
                 publicRuntimeConfig.isPreProduction ? "stage-pill" : "stage-pill stage-pill-live"
@@ -35,10 +43,21 @@ export default function PageShell({ children, className = "" }) {
             >
               {publicRuntimeConfig.siteStageLabel}
             </span>
+            <Link href="/register" className="ghost-button hidden gap-1 px-4 py-2 md:inline-flex">
+              Commencer <ArrowUpRight size={15} />
+            </Link>
           </div>
         </div>
 
         <div className="relative">{children}</div>
+
+        <footer className="mt-8 flex flex-col gap-3 border-t border-black/10 pt-5 text-xs text-black/45 sm:flex-row sm:items-center sm:justify-between">
+          <span>PayLink Africa · Paiements plus simples pour les vendeurs africains</span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Infrastructure sécurisée
+          </span>
+        </footer>
       </div>
     </main>
   );
